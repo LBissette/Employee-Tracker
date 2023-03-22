@@ -1,5 +1,4 @@
 -- -- -- viewAllEmployees
-
 SELECT employee.id, employee.first_name, employee.last_name, role.title, department.name AS department, role.salary, CONCAT(manager.first_name, ' ', manager.last_name) AS manager
 FROM employee
 JOIN role ON employee.role_id=role.id
@@ -17,7 +16,7 @@ LEFT OUTER JOIN employee AS manager ON manager.manager_id=employee.id;
 -- SELECT * FROM department
 
 -- -- addEmployee
--- INSERT INTO employee 
+INSERT INTO employee (employee.first_name, employee.last_name, employee.role_id, employee.manager_id) VALUES ('Sam', 'Kash', 9, 3)
 
 -- -- addRole
 -- INSERT INTO role
