@@ -24,33 +24,6 @@ const promptUser = [
   }
 ];
 
-const inquireEmployee = [
-  {
-    type: "input",
-    message: "What is the employee's first name",
-    name: "first name"
-  },
-  {
-    type: "input",
-    message: "What is the employee's last name",
-    name: "last name"
-  },
-  {
-    type: "list",
-    message: "What is the employee's role",
-    choices: [],
-    name: "role"
-  },
-  {
-    type: "list",
-    message: "Who is the employee's manager",
-    choices: [],
-    name: "manager"
-  },
-]
-
-
-
 menu = () => {
 
   inquirer.prompt(promptUser)
@@ -66,10 +39,9 @@ menu = () => {
         addEmployee();
         break;
 
-      // case "Update Employee Role": 
-      //   updateRole();
-      //   await menu();
-      //   break;
+      case "Update Employee Role": 
+        updateRole();
+        break;
       
       case "View All Roles": 
         viewAllRoles();
@@ -90,7 +62,6 @@ menu = () => {
       default:
         console.error("Option not available!")
         return;
-      
     };
   })
 }
@@ -143,7 +114,7 @@ function addDepartment() {
       message: "What is the department's name?",
     },
   ]).then((answer) => {
-    db.query(`INSERT INTO department (name) VALUES ('${answer.department}')`);
+    db.query(`INSERT INTO department (department.name) VALUES ('${answer.department}')`);
     console.log(`Added ${answer.department} to the database!`)
     menu();
   });
@@ -181,7 +152,7 @@ function addRole() {
         loop: false,
     },
   ]).then((answer) => {
-    let sql =`INSERT INTO role (title, salary, department_id) VALUES ('${answer.title}', ${answer.salary}, ${department_ids[departments.indexOf(answer.department)]})`
+    let sql =`INSERT INTO role (role.title, role.salary, role.department_id) VALUES ('${answer.title}', ${answer.salary}, ${department_ids[departments.indexOf(answer.department)]})`
     db.query(sql, function (err, result) {
       if (err) throw err;
       console.log(`Added ${answer.title} to the database!`)
@@ -240,15 +211,62 @@ function addEmployee() {
     },
   ]).then((answer) => {
  
-        const first_name = answer.firstName;
-        const last_name = answer.lastName;
-        const role_id = role_ids[roles.indexOf(answer.role)];
-        const manager_id = employee_ids[employees.indexOf(answer.manager)];
-        
-        db.query(`INSERT INTO employee (employee.first_name, employee.last_name, employee.role_id, employee.manager_id) VALUES ('${first_name}', '${last_name}', ${role_id}, ${manager_id})`, function (err, result) {
-          if (err) throw err;
-          console.log(`Added ${first_name} ${last_name} to the database!`);
-          menu();
-        });
+    const first_name = answer.firstName;
+    const last_name = answer.lastName;
+    const role_id = role_ids[roles.indexOf(answer.role)];
+    const manager_id = employee_ids[employees.indexOf(answer.manager)];
+    
+    db.query(`INSERT INTO employee (employee.first_name, employee.last_name, employee.role_id, employee.manager_id) VALUES ('${first_name}', '${last_name}', ${role_id}, ${manager_id})`, function (err, result) {
+      if (err) throw err;
+      console.log(`Added ${first_name} ${last_name} to the database!`);
+      menu();
+    });
+  })
+}
+
+function updateRole() {
+  let employees = [];
+  let employee_ids = [];
+  db.query(`SELECT employee.id, employee.first_name, employee.last_name, employee.role_id, employee.manager_id FROM employee`, function (err, result) {
+    if (err) throw err
+      for (const line of result) {
+          employees.push(line.first_name + " " + line.last_name);
+          employee_ids.push(line.id);
+      }
+    inquirer.prompt(
+      {
+      type: "list",
+      name: "employee",
+      message: "Which employee do you want to update?",
+      choices: employees,
+      loop: false,
+      }
+    ).then((answer) => {
+      const employee_id = employee_ids[employees.indexOf(answer.employee)];
+      db.query(`SELECT role.title, id FROM role`, (err, result) => {
+        let titles = [];
+        let title_ids = [];
+        for (const line of result) {
+            titles.push(line.title);
+            title_ids.push(line.id);
+        }
+
+        inquirer.prompt(
+          {
+          type: "list",
+          name: "new_id",
+          message: "What is their new title?",
+          choices: titles,
+          loop: false,
+          }
+        ).then((answer) => {
+          const new_role_id = title_ids[titles.indexOf(answer.new_id)];
+          db.query(`UPDATE employee SET employee.role_id = ${new_role_id} WHERE employee.id = ${employee_id}`, (err, result) => {
+            if(err) throw err;
+            menu();
+          })
+        })
+      })           
+    })
   })
 }
